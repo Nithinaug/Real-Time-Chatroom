@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -19,6 +20,7 @@ type Message struct {
 type Client struct {
 	conn *websocket.Conn
 	user string
+	id   string
 }
 
 var (
@@ -44,11 +46,17 @@ func main() {
 
 func wsHandler(c *gin.Context) {
 	ws, _ := upgrader.Upgrade(c.Writer, c.Request, nil)
-	client := &Client{conn: ws}
+
+	client := &Client{
+		conn: ws,
+		id:   uuid.NewString(),
+	}
 
 	mu.Lock()
 	clients[client] = true
 	mu.Unlock()
+
+	sendUsers()
 
 	defer func() {
 		mu.Lock()
@@ -65,15 +73,10 @@ func wsHandler(c *gin.Context) {
 		}
 
 		switch msg.Type {
-
 		case "join":
 			client.user = msg.User
 			sendUsers()
-
 		case "message":
-			broadcast(msg)
-
-		case "typing":
 			broadcast(msg)
 		}
 	}
@@ -104,3 +107,4 @@ func sendUsers() {
 		Users: list,
 	})
 }
+
