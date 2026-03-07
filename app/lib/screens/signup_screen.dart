@@ -1,4 +1,3 @@
-// lib/screens/signup_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -83,15 +82,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       color: const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Join the chat community today',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
                   const SizedBox(height: 40),
                   Text(
                     'Username',
@@ -104,7 +94,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _usernameCtrl,
-                    decoration: _inputDecoration('Pick a username'),
+                    decoration: _inputDecoration('Enter a username'),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Please enter username';
                       if (v.length < 3) return 'Username too short';
@@ -124,7 +114,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: !_isPasswordVisible,
-                    decoration: _inputDecoration('Create a password').copyWith(
+                    decoration: _inputDecoration('Enter a password').copyWith(
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
