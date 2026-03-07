@@ -167,12 +167,6 @@ class WebSocketService extends ChangeNotifier {
     debugPrint('WebSocket Error: $error');
   }
 
-  void _onDataDone() {
-    status = ConnectionStatus.disconnected;
-    _joined = false;
-    notifyListeners();
-  }
-
   String _toWsUrl(String url) {
     url = url.trim();
     if (url.isEmpty) return '';

@@ -123,24 +123,16 @@ func findPath(target string) string {
 		return target
 	}
 
-	// Try current directory
 	path := filepath.Join(abs, target)
 	if _, err := os.Stat(path); err == nil {
-		log.Printf("Found %s at: %s", target, path)
 		return path
 	}
 
-	// Try parent directory
 	path = filepath.Join(abs, "..", target)
 	if _, err := os.Stat(path); err == nil {
-		log.Printf("Found %s at: %s", target, path)
 		return path
 	}
 
-	// Try app subdirectory (for cases where user is in root but wants app/web)
-	// But we prefer the root web folder for this Go server.
-
-	log.Printf("Warning: Could not find %s directory reliably. Defaulting to: %s", target, target)
 	return target
 }
 
@@ -156,8 +148,6 @@ func main() {
 	webDir := findPath("web")
 	absWebDir, _ := filepath.Abs(webDir)
 	indexFile := filepath.Join(absWebDir, "index.html")
-	log.Printf("Static files directory: %s", absWebDir)
-	log.Printf("Index file path: %s", indexFile)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
@@ -167,20 +157,16 @@ func main() {
 		handleConnections(c)
 	})
 
-	// Unified Static handler to avoid routing conflicts
 	r.GET("/static/*filepath", func(c *gin.Context) {
 		file := c.Param("filepath")
-		log.Printf("DEBUG: Static request for path: '%s'", file)
 
-		// Handle dynamic config.js
 		if file == "/config.js" || file == "config.js" {
 			url := os.Getenv("SUPABASE_URL")
 			key := os.Getenv("SUPABASE_ANON_KEY")
 
 			if url == "" || key == "" {
-				log.Printf("CRITICAL ERROR: SUPABASE_URL or SUPABASE_ANON_KEY not set in environment!")
 				c.Header("Content-Type", "application/javascript")
-				c.String(500, "console.error('SERVER ERROR: Supabase environment variables are missing on Render!');")
+				c.String(500, "console.error('SERVER ERROR: Supabase environment variables are missing!');")
 				return
 			}
 
@@ -194,21 +180,14 @@ func main() {
 			return
 		}
 
-		// Handle other static files
 		fullPath := filepath.Join(absWebDir, file)
-		log.Printf("Requesting static file: %s -> %s", file, fullPath)
-		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			log.Printf("File not found: %s", fullPath)
-		}
 		c.File(fullPath)
 	})
 
 	r.NoRoute(func(c *gin.Context) {
-		log.Printf("No route for %s, serving index.html: %s", c.Request.URL.Path, indexFile)
 		c.File(indexFile)
 	})
 
-	// Debug route
 	r.GET("/debug/web", func(c *gin.Context) {
 		files, _ := os.ReadDir(absWebDir)
 		var list []string
@@ -223,7 +202,6 @@ func main() {
 		})
 	})
 
-	// Start self-pinging keep-alive if APP_URL is provided
 	if appURL := os.Getenv("APP_URL"); appURL != "" {
 		go startKeepAlive(appURL)
 	}
@@ -237,16 +215,12 @@ func main() {
 
 func startKeepAlive(appURL string) {
 	ticker := time.NewTicker(14 * time.Minute)
-	log.Printf("Keep-alive active: Pinging %s every 14 minutes", appURL)
 
 	for {
 		select {
 		case <-ticker.C:
 			resp, err := http.Get(fmt.Sprintf("%s/health", appURL))
-			if err != nil {
-				log.Printf("Keep-alive heartbeat failed: %v", err)
-			} else {
-				log.Printf("Keep-alive heartbeat: %s", resp.Status)
+			if err == nil {
 				resp.Body.Close()
 			}
 		}

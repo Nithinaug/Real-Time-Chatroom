@@ -1,4 +1,3 @@
-// lib/screens/login_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -67,21 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 80, color: Color(0xFF22C55E)),
                   const SizedBox(height: 24),
                   Text(
-                    'Welcome Back',
+                    'RealTalk',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.outfit(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Login to your account to continue',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: const Color(0xFF64748B),
                     ),
                   ),
                   const SizedBox(height: 48),

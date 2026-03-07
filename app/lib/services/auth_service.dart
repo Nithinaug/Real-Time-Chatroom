@@ -29,8 +29,6 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> signUp(String username, String password) async {
     try {
-      // We use username as part of the email for simplicity or store it in metadata
-      // Supabase requires an email, so we'll mock one if only username is provided
       final email = '$username@example.com'; 
       
       final response = await _supabase.auth.signUp(

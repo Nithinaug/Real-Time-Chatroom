@@ -1,5 +1,3 @@
-// lib/screens/chat_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -23,7 +21,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-connect when screen is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoConnect();
     });
@@ -34,11 +31,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final ws = context.read<WebSocketService>();
     
     if (auth.currentUsername != null && ws.status != ConnectionStatus.connected) {
-      // 1. Production Render URL
-      // 2. Local Emulator (10.0.2.2)
-      // 3. Localhost (127.0.0.1)
       final List<String> urlsToTry = [
-        'wss://real-time-chatroom-6f6f.onrender.com/ws', 
+        'wss://realtalk-f233.onrender.com/ws', 
         'ws://10.0.2.2:8080/ws',                     
         'ws://localhost:8080/ws',                  
       ];
@@ -85,7 +79,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _disconnect() {
-    // This is called when we want to MANUALLY disconnect and go to login
     context.read<WebSocketService>().disconnect();
     context.read<AuthService>().logout();
     Navigator.pushAndRemoveUntil(
@@ -103,10 +96,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final svc = context.watch<WebSocketService>();
 
-    // Auto-scroll on new messages
     if (svc.messages.isNotEmpty) _scrollToBottom();
 
-    // Handle disconnection or errors
     if (svc.status == ConnectionStatus.error) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -146,7 +137,6 @@ class _ChatScreenState extends State<ChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────
             Container(
               color: const Color(0xFFA6D6B8),
               padding: const EdgeInsets.symmetric(
@@ -174,7 +164,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
 
-                  // Online badge
                   GestureDetector(
                     onTap: () => setState(() => _usersVisible = !_usersVisible),
                     child: Container(
@@ -210,7 +199,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
 
-                  // Clear Chat button
                   IconButton(
                     onPressed: () {
                       showDialog(
@@ -239,7 +227,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     tooltip: 'Clear local messages',
                   ),
 
-                  // Leave button
                   IconButton(
                     onPressed: _logout,
                     icon: const Icon(Icons.logout_rounded),
@@ -250,7 +237,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            // ── Online users slide-down panel ────────────────
             if (_usersVisible)
               OnlineUsersSheet(
                 users: svc.onlineUsers,
@@ -258,7 +244,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 onClose: () => setState(() => _usersVisible = false),
               ),
 
-            // ── Messages list ────────────────────────────────
             Expanded(
               child: svc.messages.isEmpty
                   ? const Center(
@@ -293,7 +278,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
             ),
 
-            // ── Input bar ────────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               decoration: const BoxDecoration(

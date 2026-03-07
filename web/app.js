@@ -1,19 +1,21 @@
 let client;
 let configError = null;
+
 try {
   if (typeof CONFIG === 'undefined') {
     throw new Error("CONFIG is not defined. config.js may have failed to load.");
   }
+
   const SUPABASE_URL = CONFIG.SUPABASE_URL;
   const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("Supabase URL or Anon Key is empty in CONFIG.");
   }
+
   client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log("Supabase client initialized.");
 } catch (e) {
   configError = e.message;
-  console.error("Failed to initialize Supabase client:", e);
 }
 
 let socket;
@@ -41,14 +43,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   showSignup.onclick = (e) => {
     e.preventDefault();
-    console.log("Switching to signup form");
     loginForm.style.display = "none";
     signupForm.style.display = "block";
   };
 
   showLogin.onclick = (e) => {
     e.preventDefault();
-    console.log("Switching to login form");
     signupForm.style.display = "none";
     loginForm.style.display = "block";
   };
@@ -68,43 +68,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function handleLogin() {
-    console.log("Starting handleLogin...");
     const username = document.getElementById("login-username").value.trim();
     const password = document.getElementById("login-password").value;
     if (!username || !password) return alert("Please enter both username and password");
 
     if (!client) {
-      const errorDetail = configError || "Unknown error (check browser console)";
-      return alert(`Application configuration is missing!\n\nReason: ${errorDetail}\n\nAction: Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in your Render project settings.`);
-    }
-
-    // Check if user is already online (from the onlineUsers list)
-    const onlineUsersList = Array.from(document.querySelectorAll(".user-item span")).map(el => el.textContent);
-    if (onlineUsersList.includes(username)) {
-      if (!confirm(`Warning: User "${username}" appears to be already logged in on another device. Continue?`)) {
-        return;
-      }
+      return alert(`Application configuration is missing!`);
     }
 
     setBtnLoading(loginBtn, true);
     try {
-      console.log(`Attempting login for: ${username}@example.com`);
       const { data, error } = await client.auth.signInWithPassword({
         email: `${username}@example.com`,
         password: password
       });
 
       if (error) {
-        console.error("Auth error:", error);
         setBtnLoading(loginBtn, false);
         return alert(error.message);
       }
-      console.log("Auth success, user data:", data.user);
       onAuthenticated(data.user);
     } catch (err) {
-      console.error("Unexpected error during login:", err);
       setBtnLoading(loginBtn, false);
-      alert("An unexpected error occurred: " + err.message);
+      alert(err.message);
     }
   }
 
@@ -115,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (password.length < 6) return alert("Password must be at least 6 characters");
 
     if (!client) {
-      return alert("Application configuration is missing. Please refresh the page or check the server logs.");
+      return alert("Application configuration is missing.");
     }
 
     setBtnLoading(signupBtn, true);
@@ -126,7 +112,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     setBtnLoading(signupBtn, false);
-    if (error) return alert(error.message);
+    if (error) {
+      return alert(error.message);
+    }
 
     alert("Account created successfully! You can now login.");
     showLogin.click();
@@ -140,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleClearChat() {
-    if (confirm("Clear all messages on this device? This will not delete them from the database.")) {
+    if (confirm("Clear all messages on this device?")) {
       msgArea.innerHTML = "";
     }
   }
@@ -151,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
   logoutBtn.onclick = handleLogout;
 
   async function onAuthenticated(user) {
-    console.log("onAuthenticated called for:", user.email);
     myName = user.user_metadata.username || user.email.split('@')[0];
     displayName.textContent = myName;
     authWrapper.style.display = "none";
@@ -159,15 +146,11 @@ document.addEventListener("DOMContentLoaded", () => {
     joined = true;
 
     try {
-      console.log("Fetching chat history...");
       await fetchHistory();
-      console.log("Connecting WebSocket...");
       connectWebSocket();
-      console.log("Setting up Realtime...");
       setupRealtime();
     } catch (err) {
-      console.error("Error during post-auth setup:", err);
-      alert("Error loading chat data. Check console for details.");
+      alert("Error loading chat data.");
     }
   }
 
@@ -178,13 +161,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .order('created_at', { ascending: true })
       .limit(100);
 
-    if (error) {
-      console.error("Error fetching history:", error);
-      throw error;
-    }
+    if (error) throw error;
 
     if (data) {
-      console.log(`Fetched ${data.length} messages.`);
       msgArea.innerHTML = "";
       data.forEach(m => addMsg(m.username, m.text, m.created_at));
     }
@@ -219,7 +198,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    socket.onclose = () => setTimeout(connectWebSocket, 3000);
+    socket.onclose = () => {
+      if (joined) {
+        setTimeout(connectWebSocket, 3000);
+      }
+    };
   }
 
   async function sendMessage() {
