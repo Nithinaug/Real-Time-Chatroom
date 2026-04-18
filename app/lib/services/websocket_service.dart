@@ -343,22 +343,6 @@ class WebSocketService extends ChangeNotifier {
         return;
       }
 
-      if (type == 'system') {
-        if (msg.roomID == _currentRoomID || msg.roomID == null) {
-          final sysMsg = ChatMessage(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            type: 'system',
-            user: msg.user ?? 'System',
-            text: msg.text,
-            roomID: _currentRoomID,
-            timestamp: DateTime.now(),
-          );
-          messages.add(sysMsg);
-          notifyListeners();
-        }
-        return;
-      }
-
       if (type == 'message') {
         if (msg.user == _username) return;
         if ((msg.roomID == _currentRoomID || msg.roomID == null) &&

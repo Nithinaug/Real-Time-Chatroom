@@ -16,27 +16,6 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.type == 'system') {
-      return Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            message.text ?? '',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
-            ),
-          ),
-        ),
-      );
-    }
-
     final timeStr = message.timestamp != null
         ? '${message.timestamp!.hour}:${message.timestamp!.minute.toString().padLeft(2, '0')}'
         : '';

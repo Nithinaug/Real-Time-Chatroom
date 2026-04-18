@@ -473,8 +473,6 @@ document.addEventListener("DOMContentLoaded", () => {
           updateTypingUI();
         }, 3000);
         updateTypingUI();
-      } else if (msg.type === "system") {
-        addSystemMsg(msg.text);
       } else if (msg.type === "message" && msg.user !== myName) {
         addMsg(msg.user, msg.text, new Date().toISOString(), msg.id);
       }
@@ -577,22 +575,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (recentMessages.some(m => m.sig === sig)) return;
     recentMessages.push({ sig, time: now });
     const bubble = createMsgElement(user, text, timestamp, id);
-    msgArea.appendChild(bubble);
-    msgArea.scrollTop = msgArea.scrollHeight;
-  }
-  
-  function addSystemMsg(text) {
-    const bubble = document.createElement("div");
-    bubble.className = "msg system";
-    bubble.style.textAlign = "center";
-    bubble.style.alignSelf = "center";
-    bubble.style.backgroundColor = "#e2e8f0";
-    bubble.style.color = "#475569";
-    bubble.style.padding = "4px 12px";
-    bubble.style.borderRadius = "16px";
-    bubble.style.fontSize = "12px";
-    bubble.style.margin = "8px 0";
-    bubble.textContent = text;
     msgArea.appendChild(bubble);
     msgArea.scrollTop = msgArea.scrollHeight;
   }
