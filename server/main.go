@@ -71,6 +71,15 @@ func handleConnections(c *gin.Context) {
 		roomsMu.Unlock()
 		ws.Close()
 		if client.Room != "" {
+			if client.User != "" {
+				sysMsg := Message{
+					Type: "system",
+					User: "System",
+					Text: fmt.Sprintf("%s left the chat", client.User),
+					Room: client.Room,
+				}
+				broadcastMessage(sysMsg)
+			}
 			broadcastUserList(client.Room)
 		}
 	}()
@@ -90,6 +99,15 @@ func handleConnections(c *gin.Context) {
 						delete(rooms, client.Room)
 					}
 					roomsMu.Unlock()
+					if client.User != "" {
+						sysMsg := Message{
+							Type: "system",
+							User: "System",
+							Text: fmt.Sprintf("%s left the chat", client.User),
+							Room: client.Room,
+						}
+						broadcastMessage(sysMsg)
+					}
 					broadcastUserList(client.Room)
 					roomsMu.Lock()
 				}
@@ -102,6 +120,13 @@ func handleConnections(c *gin.Context) {
 			}
 			rooms[client.Room][client] = true
 			roomsMu.Unlock()
+			sysMsg := Message{
+				Type: "system",
+				User: "System",
+				Text: fmt.Sprintf("%s joined the chat", client.User),
+				Room: client.Room,
+			}
+			broadcastMessage(sysMsg)
 			broadcastUserList(client.Room)
 		case "leave":
 			roomsMu.Lock()
@@ -112,9 +137,18 @@ func handleConnections(c *gin.Context) {
 				}
 			}
 			roomsMu.Unlock()
+			if client.User != "" {
+				sysMsg := Message{
+					Type: "system",
+					User: "System",
+					Text: fmt.Sprintf("%s left the chat", client.User),
+					Room: msg.Room,
+				}
+				broadcastMessage(sysMsg)
+			}
 			client.Room = ""
 			broadcastUserList(msg.Room)
-		case "message":
+		case "message", "typing":
 			if msg.Room == "" {
 				msg.Room = client.Room
 			}

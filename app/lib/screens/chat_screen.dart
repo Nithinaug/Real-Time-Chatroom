@@ -98,6 +98,15 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
   }
+  
+  DateTime _lastTypingTime = DateTime.fromMillisecondsSinceEpoch(0);
+  void _onTyping() {
+    final now = DateTime.now();
+    if (now.difference(_lastTypingTime) > const Duration(seconds: 2)) {
+      _lastTypingTime = now;
+      context.read<WebSocketService>().sendTyping();
+    }
+  }
 
   void _logout() async {
     context.read<WebSocketService>().disconnect();
@@ -407,6 +416,22 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
+            if (svc.typingUsers.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                color: const Color(0xFFF8FAFC),
+                child: Text(
+                  svc.typingUsers.length == 1 
+                      ? '${svc.typingUsers.first} is typing...'
+                      : '${svc.typingUsers.join(', ')} are typing...',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
             Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               decoration: const BoxDecoration(
@@ -421,6 +446,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: TextField(
                       controller: _msgCtrl,
                       textCapitalization: TextCapitalization.sentences,
+                      onChanged: (_) => _onTyping(),
                       onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
                         hintText: 'Type a message…',

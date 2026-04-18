@@ -13,6 +13,8 @@ class WebSocketService extends ChangeNotifier {
   Timer? _pingTimer;
   final List<ChatMessage> messages = [];
   List<String> onlineUsers = [];
+  final Map<String, Timer> _typingTimers = {};
+  List<String> get typingUsers => _typingTimers.keys.toList();
   ConnectionStatus status = ConnectionStatus.disconnected;
   String? errorMessage;
   String _serverUrl = '';
@@ -259,6 +261,11 @@ class WebSocketService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void sendTyping() {
+    if (_currentRoomID.isEmpty || _username.isEmpty) return;
+    _send(ChatMessage(type: 'typing', user: _username, roomID: _currentRoomID));
+  }
   Future<void> deleteMessageForMe(String msgId) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
@@ -293,6 +300,10 @@ class WebSocketService extends ChangeNotifier {
     _supabaseChannel?.unsubscribe();
     _pingTimer?.cancel();
     _pingTimer = null;
+    for (final timer in _typingTimers.values) {
+      timer.cancel();
+    }
+    _typingTimers.clear();
     _joined = false;
     status = ConnectionStatus.disconnected;
     onlineUsers.clear();
@@ -318,6 +329,36 @@ class WebSocketService extends ChangeNotifier {
         json['room_id'] = json['room'];
       }
       final msg = ChatMessage.fromJson(json);
+
+      if (type == 'typing') {
+        if (msg.user != null && msg.user != _username && msg.roomID == _currentRoomID) {
+          final u = msg.user!;
+          _typingTimers[u]?.cancel();
+          _typingTimers[u] = Timer(const Duration(seconds: 3), () {
+            _typingTimers.remove(u);
+            notifyListeners();
+          });
+          notifyListeners();
+        }
+        return;
+      }
+
+      if (type == 'system') {
+        if (msg.roomID == _currentRoomID || msg.roomID == null) {
+          final sysMsg = ChatMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            type: 'system',
+            user: msg.user ?? 'System',
+            text: msg.text,
+            roomID: _currentRoomID,
+            timestamp: DateTime.now(),
+          );
+          messages.add(sysMsg);
+          notifyListeners();
+        }
+        return;
+      }
+
       if (type == 'message') {
         if (msg.user == _username) return;
         if ((msg.roomID == _currentRoomID || msg.roomID == null) &&

@@ -9,6 +9,24 @@ try {
 let socket;
 let myName = "";
 let joined = false;
+let typingTimers = {};
+
+function updateTypingUI() {
+  const users = Object.keys(typingTimers);
+  const indicator = document.getElementById("typingIndicator");
+  if (!indicator) return;
+  if (users.length === 0) {
+    indicator.style.display = "none";
+  } else {
+    indicator.style.display = "block";
+    if (users.length === 1) {
+      indicator.textContent = `${users[0]} is typing...`;
+    } else {
+      indicator.textContent = `${users.join(", ")} are typing...`;
+    }
+  }
+}
+
 function isMe(username) {
   if (!username || !myName) return false;
   return username.trim().toLowerCase() === myName.trim().toLowerCase();
@@ -447,6 +465,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (msg.type === "users") {
         showUsers(msg.users);
         onlineCount.textContent = `${msg.users.length} online`;
+      } else if (msg.type === "typing" && msg.user !== myName) {
+        const u = msg.user;
+        if (typingTimers[u]) clearTimeout(typingTimers[u]);
+        typingTimers[u] = setTimeout(() => {
+          delete typingTimers[u];
+          updateTypingUI();
+        }, 3000);
+        updateTypingUI();
+      } else if (msg.type === "system") {
+        addSystemMsg(msg.text);
       } else if (msg.type === "message" && msg.user !== myName) {
         addMsg(msg.user, msg.text, new Date().toISOString(), msg.id);
       }
@@ -474,6 +502,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   sendBtn.onclick = sendMessage;
   msgBox.onkeydown = e => { if (e.key === "Enter") sendMessage(); };
+  
+  let lastTypingTime = 0;
+  msgBox.addEventListener("input", () => {
+    if (!joined || !currentRoom) return;
+    const now = Date.now();
+    if (now - lastTypingTime > 2000) {
+      lastTypingTime = now;
+      if (socket && socket.readyState === 1) {
+        socket.send(JSON.stringify({ type: "typing", user: myName, room: currentRoom.id }));
+      }
+    }
+  });
+
   const trashSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`;
   function createMsgElement(user, text, timestamp, id) {
     const bubble = document.createElement("div");
@@ -536,6 +577,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (recentMessages.some(m => m.sig === sig)) return;
     recentMessages.push({ sig, time: now });
     const bubble = createMsgElement(user, text, timestamp, id);
+    msgArea.appendChild(bubble);
+    msgArea.scrollTop = msgArea.scrollHeight;
+  }
+  
+  function addSystemMsg(text) {
+    const bubble = document.createElement("div");
+    bubble.className = "msg system";
+    bubble.style.textAlign = "center";
+    bubble.style.alignSelf = "center";
+    bubble.style.backgroundColor = "#e2e8f0";
+    bubble.style.color = "#475569";
+    bubble.style.padding = "4px 12px";
+    bubble.style.borderRadius = "16px";
+    bubble.style.fontSize = "12px";
+    bubble.style.margin = "8px 0";
+    bubble.textContent = text;
     msgArea.appendChild(bubble);
     msgArea.scrollTop = msgArea.scrollHeight;
   }
